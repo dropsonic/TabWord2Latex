@@ -16,7 +16,7 @@ namespace TabWord2Latex
         {
             Table table = new Table();
 
-            Word.TableProperties tabProp = wordTable.Elements<Word.TableProperties>().First();
+            //Word.TableProperties tabProp = wordTable.Elements<Word.TableProperties>().First();
 
             var grid = wordTable.Elements<Word.TableGrid>().First();
             var columns = grid.Elements<Word.GridColumn>();
@@ -56,6 +56,7 @@ namespace TabWord2Latex
                 r++;
             }
 
+            table.CalculateSpan();
             return table;
         }
 

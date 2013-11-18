@@ -25,6 +25,7 @@ namespace TabWord2Latex
                     Console.WriteLine("File not found ({0}).", options.WordFileName);
                     return;
                 }
+
                 Word.Document document = null;
                 Word.Application app = null;
                 try

@@ -17,7 +17,7 @@ namespace TabWord2Latex
         {
             Table table = new Table();
 
-            //Read caption (previous paragraph to the table)
+            // Read caption (previous paragraph to the table)
             var captionPar = wordTable.PreviousSibling<Word.Paragraph>();
             table.Caption = ExtractCaption(captionPar.InnerText);
 
@@ -28,39 +28,43 @@ namespace TabWord2Latex
 
             table.Columns = columns.Select(gc => new Column(int.Parse(gc.Width.Value)));
 
-            var rows = wordTable.Elements<Word.TableRow>();
+            var wordRows = wordTable.Elements<Word.TableRow>();
 
             int colsTotal = columns.Count();
-            int rowsTotal = rows.Count();
-            table.Cells = new Cell[colsTotal, rowsTotal];
+            int rowsTotal = wordRows.Count();
 
-            int r = 0;
-            foreach (var row in rows)
+            var rows = new List<Row>();
+
+            foreach (var wordRow in wordRows)
             {
-                int c = 0;
-
-                foreach (var wordCell in row.Elements<Word.TableCell>())
+                var cells = new List<Cell>();
+                foreach (var wordCell in wordRow.Elements<Word.TableCell>())
                 {
                     var cell = new Cell()
                     {
-                        Text = wordCell.InnerText,
-                        Col = c,
-                        Row = r
+                        Text = wordCell.InnerText
                     };
-                    //Console.WriteLine(cell.InnerText);
+                    
                     var cellProp = wordCell.Elements<Word.TableCellProperties>().First();
 
                     cell.VAlign = ConvertVerticalAlign(cellProp.TableCellVerticalAlignment);
 
-                    cell.HMerge = ConvertMerge(cellProp.HorizontalMerge);
+                    if (cellProp.GridSpan != null && cellProp.GridSpan.Val != null
+                        && cellProp.GridSpan.Val.HasValue)
+                        cell.ColSpan = cellProp.GridSpan.Val.Value;
+
                     cell.VMerge = ConvertMerge(cellProp.VerticalMerge);
 
-                    table.Cells[c, r] = cell;
-                    c++;
+                    cells.Add(cell);
+
+                    // Add additional empty cells for GridSpan value (emulating HorizontalMerge value)
+                    for (int i = 1; i < cell.ColSpan; i++)
+                        cells.Add(new Cell() { HMerge = Cell.Merge.Continue });
                 }
-                r++;
+                rows.Add(new Row { Cells = cells });
             }
 
+            table.Rows = rows;
             table.CalculateSpan();
             return table;
         }
@@ -113,17 +117,7 @@ namespace TabWord2Latex
             if (merge == null)
                 return Cell.Merge.None;
             else if (merge.Val == null)
-                return Cell.Merge.Continue; //Microsoft Word does not follow specifications
-            else
-                return ConvertMergeValue(merge.Val.Value);
-        }
-
-        static Cell.Merge ConvertMerge(Word.HorizontalMerge merge)
-        {
-            if (merge == null)
-                return Cell.Merge.None;
-            else if (merge.Val == null)
-                return Cell.Merge.Continue; //Microsoft Word does not follow specifications
+                return Cell.Merge.Continue; // Microsoft Word does not follow specifications
             else
                 return ConvertMergeValue(merge.Val.Value);
         }

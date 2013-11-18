@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +27,9 @@ namespace TabWord2Latex
         /// </summary>
         internal void CalculateSpan()
         {
+            if (Cells == null)
+                return;
+
             //Vertical merge
             for (int i = 0; i < ColsCount; i++)
             {
@@ -79,6 +83,7 @@ namespace TabWord2Latex
         }
     }
 
+    [DebuggerDisplay("{Text}")]
     class Cell
     {
         public enum HorizontalAlignment

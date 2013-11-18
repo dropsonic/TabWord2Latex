@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -15,6 +16,10 @@ namespace TabWord2Latex
         public Table ParseTable(Word.Table wordTable)
         {
             Table table = new Table();
+
+            //Read caption (previous paragraph to the table)
+            var captionPar = wordTable.PreviousSibling<Word.Paragraph>();
+            table.Caption = ExtractCaption(captionPar.InnerText);
 
             //Word.TableProperties tabProp = wordTable.Elements<Word.TableProperties>().First();
 
@@ -58,6 +63,19 @@ namespace TabWord2Latex
 
             table.CalculateSpan();
             return table;
+        }
+
+        /// <summary>
+        /// Extracts table name from full caption (excludes "table #N" part).
+        /// </summary>
+        static string ExtractCaption(string captionString)
+        {
+            Regex regex = new Regex(@"^(Таблица|Table)\s*[0-9,.:;-]*\s*[-–—]*\s*", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            var match = regex.Match(captionString);
+            if (match.Success)
+                return captionString.Remove(match.Index, match.Length);
+            else
+                return "";
         }
 
         static Cell.VerticalAlignment ConvertVerticalAlign(Word.TableCellVerticalAlignment align)

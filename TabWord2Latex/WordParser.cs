@@ -91,16 +91,20 @@ namespace TabWord2Latex
 
         static Cell.Merge ConvertMerge(Word.VerticalMerge merge)
         {
-            if (merge == null || merge.Val == null)
+            if (merge == null)
                 return Cell.Merge.None;
+            else if (merge.Val == null)
+                return Cell.Merge.Continue; //Microsoft Word does not follow specifications
             else
                 return ConvertMergeValue(merge.Val.Value);
         }
 
         static Cell.Merge ConvertMerge(Word.HorizontalMerge merge)
         {
-            if (merge == null || merge.Val == null)
+            if (merge == null)
                 return Cell.Merge.None;
+            else if (merge.Val == null)
+                return Cell.Merge.Continue; //Microsoft Word does not follow specifications
             else
                 return ConvertMergeValue(merge.Val.Value);
         }

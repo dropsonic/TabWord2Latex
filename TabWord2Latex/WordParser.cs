@@ -44,11 +44,14 @@ namespace TabWord2Latex
                     {
                         Text = wordCell.InnerText
                     };
+                    var par = wordCell.Descendants<Word.Paragraph>().First();
+                    cell.Justification = ParseJustification(par);
 
+                    // Parsing cell properties
                     var cellProp = wordCell.TableCellProperties;
                     if (cellProp != null)
                     {
-                        cell.VAlign = ConvertVerticalAlign(cellProp.TableCellVerticalAlignment);
+                        cell.Align = ConvertAlign(cellProp.TableCellVerticalAlignment);
 
                         if (cellProp.GridSpan != null && cellProp.GridSpan.Val != null
                             && cellProp.GridSpan.Val.HasValue)
@@ -84,21 +87,23 @@ namespace TabWord2Latex
                 return "";
         }
 
-        static Cell.VerticalAlignment ConvertVerticalAlign(Word.TableCellVerticalAlignment align)
+        static Cell.Alignment ConvertAlign(Word.TableCellVerticalAlignment align)
         {
-            if (align == null)
-                return Cell.VerticalAlignment.Center; //default value
-            switch (align.Val.Value)
+            if (align != null && align.Val != null && align.Val.HasValue)
             {
-                case Word.TableVerticalAlignmentValues.Bottom:
-                    return Cell.VerticalAlignment.Bottom;
-                case Word.TableVerticalAlignmentValues.Center:
-                    return Cell.VerticalAlignment.Center;
-                case Word.TableVerticalAlignmentValues.Top:
-                    return Cell.VerticalAlignment.Top;
-                default:
-                    return Cell.VerticalAlignment.Center;
+                switch (align.Val.Value)
+                {
+                    case Word.TableVerticalAlignmentValues.Bottom:
+                        return Cell.Alignment.Bottom;
+                    case Word.TableVerticalAlignmentValues.Top:
+                        return Cell.Alignment.Top;
+                    case Word.TableVerticalAlignmentValues.Center:
+                    default:
+                        return Cell.Alignment.Center;
+                }
             }
+
+            return Cell.Alignment.Center; //default value
         }
 
         static Cell.Merge ConvertMergeValue(Word.MergedCellValues value)
@@ -118,7 +123,7 @@ namespace TabWord2Latex
         {
             if (merge == null)
                 return Cell.Merge.None;
-            else if (merge.Val == null)
+            else if (merge.Val == null || !merge.Val.HasValue)
                 return Cell.Merge.Continue; // Microsoft Word does not follow specifications
             else
                 return ConvertMergeValue(merge.Val.Value);
@@ -134,6 +139,28 @@ namespace TabWord2Latex
                 return 0;
             else
                 return int.Parse(width.Width);
+        }
+
+        static Cell.JustificationType ParseJustification(Word.Paragraph par)
+        {
+            if (par != null && par.ParagraphProperties != null &&
+                par.ParagraphProperties.Justification != null &&
+                par.ParagraphProperties.Justification.Val != null &&
+                par.ParagraphProperties.Justification.Val.HasValue)
+            {
+                switch (par.ParagraphProperties.Justification.Val.Value)
+                {
+                    case Word.JustificationValues.Left:
+                        return Cell.JustificationType.Left;
+                    case Word.JustificationValues.Right:
+                        return Cell.JustificationType.Right;
+                    case Word.JustificationValues.Center:
+                    default:
+                        return Cell.JustificationType.Center;
+                }
+            }
+
+            return Cell.JustificationType.Left; // default value for Microsoft Word
         }
     }
 }

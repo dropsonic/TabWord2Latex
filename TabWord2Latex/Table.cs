@@ -63,13 +63,13 @@ namespace TabWord2Latex
     [DebuggerDisplay("{Text}")]
     class Cell
     {
-        public enum HorizontalAlignment
+        public enum JustificationType
         {
             Left,
             Center,
             Right
         }
-        public enum VerticalAlignment
+        public enum Alignment
         {
             Top,
             Center,
@@ -84,8 +84,8 @@ namespace TabWord2Latex
         }
 
         public string Text { get; set; }
-        public HorizontalAlignment HAlign { get; set; }
-        public VerticalAlignment VAlign { get; set; }
+        public JustificationType Justification { get; set; }
+        public Alignment Align { get; set; }
 
         public Merge HMerge { get; set; }
         public Merge VMerge { get; set; }

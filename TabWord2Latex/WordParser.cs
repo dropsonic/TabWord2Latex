@@ -44,22 +44,24 @@ namespace TabWord2Latex
                     {
                         Text = wordCell.InnerText
                     };
-                    
-                    var cellProp = wordCell.Elements<Word.TableCellProperties>().First();
 
-                    cell.VAlign = ConvertVerticalAlign(cellProp.TableCellVerticalAlignment);
+                    var cellProp = wordCell.TableCellProperties;
+                    if (cellProp != null)
+                    {
+                        cell.VAlign = ConvertVerticalAlign(cellProp.TableCellVerticalAlignment);
 
-                    if (cellProp.GridSpan != null && cellProp.GridSpan.Val != null
-                        && cellProp.GridSpan.Val.HasValue)
-                        cell.ColSpan = cellProp.GridSpan.Val.Value;
+                        if (cellProp.GridSpan != null && cellProp.GridSpan.Val != null
+                            && cellProp.GridSpan.Val.HasValue)
+                            cell.ColSpan = cellProp.GridSpan.Val.Value;
 
-                    cell.VMerge = ConvertMerge(cellProp.VerticalMerge);
+                        cell.VMerge = ConvertMerge(cellProp.VerticalMerge);
 
-                    cells.Add(cell);
+                        cells.Add(cell);
 
-                    // Add additional empty cells for GridSpan value (emulating HorizontalMerge value)
-                    for (int i = 1; i < cell.ColSpan; i++)
-                        cells.Add(new Cell() { HMerge = Cell.Merge.Continue });
+                        // Add additional empty cells for GridSpan value (emulating HorizontalMerge value)
+                        for (int i = 1; i < cell.ColSpan; i++)
+                            cells.Add(new Cell() { HMerge = Cell.Merge.Continue });
+                    }
                 }
                 rows.Add(new Row { Cells = cells });
             }

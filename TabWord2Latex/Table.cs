@@ -7,6 +7,19 @@ using System.Threading.Tasks;
 
 namespace TabWord2Latex
 {
+    public enum CellJustification
+    {
+        Left,
+        Center,
+        Right
+    }
+    public enum CellAlignment
+    {
+        Top,
+        Center,
+        Bottom
+    }
+
     class Table
     {
         public string Caption { get; set; }
@@ -49,6 +62,55 @@ namespace TabWord2Latex
     class Row
     {
         public IList<Cell> Cells { get; set; }
+        ///// <summary>
+        ///// Alignment for most of the cells.
+        ///// </summary>
+        //public CellAlignment RowAlignment
+        //{
+        //    get
+        //    {
+        //        // not optimal, but easy to read
+        //        int top = Cells.Count(c => c.Align == CellAlignment.Top);
+        //        int center = Cells.Count(c => c.Align == CellAlignment.Center);
+        //        int bottom = Cells.Count(c => c.Align == CellAlignment.Bottom);
+        //        CellAlignment result = CellAlignment.Center;
+        //        if (top > center)
+        //            if (top > bottom)
+        //                result = CellAlignment.Top;
+        //            else
+        //                result = CellAlignment.Bottom;
+        //        else
+        //            if (bottom > center)
+        //                result = CellAlignment.Bottom;
+        //            else
+        //                result = CellAlignment.Center;
+        //        return result;
+        //    }
+        //}
+        ///// <summary>
+        ///// Justification for most of the cells.
+        ///// </summary>
+        //public CellJustification RowJustification
+        //{
+        //    get
+        //    {
+        //        int left = Cells.Count(c => c.Justification == CellJustification.Left);
+        //        int center = Cells.Count(c => c.Justification == CellJustification.Center);
+        //        int bottom = Cells.Count(c => c.Justification == CellJustification.Right);
+        //        CellJustification result = CellJustification.Center;
+        //        if (left > center)
+        //            if (left > bottom)
+        //                result = CellJustification.Left;
+        //            else
+        //                result = CellJustification.Right;
+        //        else
+        //            if (bottom > center)
+        //                result = CellJustification.Right;
+        //            else
+        //                result = CellJustification.Center;
+        //        return result;
+        //    }
+        //}
     }
 
     class Column
@@ -63,19 +125,6 @@ namespace TabWord2Latex
     [DebuggerDisplay("{Text}")]
     class Cell
     {
-        public enum JustificationType
-        {
-            Left,
-            Center,
-            Right
-        }
-        public enum Alignment
-        {
-            Top,
-            Center,
-            Bottom
-        }
-
         public enum Merge
         {
             None,
@@ -84,11 +133,14 @@ namespace TabWord2Latex
         }
 
         public string Text { get; set; }
-        public JustificationType Justification { get; set; }
-        public Alignment Align { get; set; }
+        public CellJustification Justification { get; set; }
+        public CellAlignment Align { get; set; }
 
         public Merge HMerge { get; set; }
         public Merge VMerge { get; set; }
+
+        public int Col { get; set; }
+        public int Row { get; set; }
 
         private int _colSpan = 1;
         public int ColSpan

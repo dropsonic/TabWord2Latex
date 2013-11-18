@@ -21,9 +21,10 @@ namespace TabWord2Latex
             if (CommandLine.Parser.Default.ParseArguments(args, options))
             {
                 options.WordFileName = Path.GetFullPath(options.WordFileName);
-                if (Path.GetExtension(options.WordFileName) != "docx")
+                if (Path.GetExtension(options.WordFileName) != ".docx")
                 {
                     Console.WriteLine("Only docx (OpenXML) documents are supported.");
+                    return;
                 }
 
                 if (!File.Exists(options.WordFileName))
@@ -61,9 +62,6 @@ namespace TabWord2Latex
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error: {0} - {1}", ex.GetType().Name, ex.Message);
-                }
-                finally
-                {
                 }
             }
         }

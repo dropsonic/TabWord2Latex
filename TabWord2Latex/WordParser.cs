@@ -26,7 +26,7 @@ namespace TabWord2Latex
             var grid = wordTable.Elements<Word.TableGrid>().First();
             var columns = grid.Elements<Word.GridColumn>();
 
-            table.Columns = columns.Select(gc => new Column(int.Parse(gc.Width.Value)));
+            table.Columns = columns.Select(gc => new Column(int.Parse(gc.Width.Value))).ToList();
 
             var wordRows = wordTable.Elements<Word.TableRow>();
 
@@ -87,23 +87,23 @@ namespace TabWord2Latex
                 return "";
         }
 
-        static Cell.Alignment ConvertAlign(Word.TableCellVerticalAlignment align)
+        static CellAlignment ConvertAlign(Word.TableCellVerticalAlignment align)
         {
             if (align != null && align.Val != null && align.Val.HasValue)
             {
                 switch (align.Val.Value)
                 {
                     case Word.TableVerticalAlignmentValues.Bottom:
-                        return Cell.Alignment.Bottom;
+                        return CellAlignment.Bottom;
                     case Word.TableVerticalAlignmentValues.Top:
-                        return Cell.Alignment.Top;
+                        return CellAlignment.Top;
                     case Word.TableVerticalAlignmentValues.Center:
                     default:
-                        return Cell.Alignment.Center;
+                        return CellAlignment.Center;
                 }
             }
 
-            return Cell.Alignment.Center; //default value
+            return CellAlignment.Center; //default value
         }
 
         static Cell.Merge ConvertMergeValue(Word.MergedCellValues value)
@@ -141,7 +141,7 @@ namespace TabWord2Latex
                 return int.Parse(width.Width);
         }
 
-        static Cell.JustificationType ParseJustification(Word.Paragraph par)
+        static CellJustification ParseJustification(Word.Paragraph par)
         {
             if (par != null && par.ParagraphProperties != null &&
                 par.ParagraphProperties.Justification != null &&
@@ -151,16 +151,16 @@ namespace TabWord2Latex
                 switch (par.ParagraphProperties.Justification.Val.Value)
                 {
                     case Word.JustificationValues.Left:
-                        return Cell.JustificationType.Left;
+                        return CellJustification.Left;
                     case Word.JustificationValues.Right:
-                        return Cell.JustificationType.Right;
+                        return CellJustification.Right;
                     case Word.JustificationValues.Center:
                     default:
-                        return Cell.JustificationType.Center;
+                        return CellJustification.Center;
                 }
             }
 
-            return Cell.JustificationType.Left; // default value for Microsoft Word
+            return CellJustification.Left; // default value for Microsoft Word
         }
     }
 }

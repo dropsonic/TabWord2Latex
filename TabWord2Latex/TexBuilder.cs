@@ -39,6 +39,38 @@ namespace TabWord2Latex
             return CommandRargs("end", envname);
         }
 
+        /// <summary>
+        /// Builds column definition for tabular.
+        /// </summary>
+        private string BuildColDef(Table table)
+        {
+            StringBuilder s = new StringBuilder("|");
+            foreach (var col in table.Columns)
+            {
+                s.Append("C{").Append(col.Width).Append("pt}|");
+            }
+            return s.ToString();
+        }
+
+        private string BuildTableRow(Row row)
+        {
+            StringBuilder s = new StringBuilder("|");
+            foreach (var cell in row.Cells)
+            {
+                if (cell.HMerge == Cell.Merge.Continue ||
+                    cell.VMerge == Cell.Merge.Continue)
+                {
+                    s.Append(" &");
+                }
+                else
+                {
+                    //if (cell.
+                }
+                s.AppendLine();
+            }
+            return s.ToString();
+        }
+
         public string TableToTex(Table table)
         {
             StringBuilder s = new StringBuilder();
@@ -55,6 +87,15 @@ namespace TabWord2Latex
                 s.AppendLine(Command("nohyphenation"));
             s.AppendLine();
 
+            // \begin{tabular}{...}
+            {
+                s.AppendLine(BeginEnvironment("tabular", BuildColDef(table)));
+                s.AppendLine(CommandRargs("hline"));
+                foreach (var row in table.Rows)
+                    s.AppendLine(BuildTableRow(row));
+                s.AppendLine(EndEnvironment("tabular"));
+            }
+            // \end{tabular}
 
             s.AppendLine(EndEnvironment("table"));
             return s.ToString();

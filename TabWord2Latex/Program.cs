@@ -7,7 +7,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Word = Microsoft.Office.Interop.Word;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace TabWord2Latex
 {
@@ -25,32 +27,28 @@ namespace TabWord2Latex
                     Console.WriteLine("File not found ({0}).", options.WordFileName);
                     return;
                 }
-
-                Word.Document document = null;
-                Word.Application app = null;
                 try
                 {
-                    app = new Word.Application();
-                    document = app.Documents.Open(options.WordFileName);
+                    using (WordprocessingDocument document = WordprocessingDocument.Open(options.WordFileName, false))
+                    {
+                        var body = document.MainDocumentPart.Document.Body;
 
-                    if (document.Tables.Count <= 0)
-                        throw new ApplicationException("Document does not contain a table.");
+                        var tables = body.Elements<Word.Table>();
+                        var tablesCount = tables.Count();
 
-                    if (options.TableNumber > document.Tables.Count)
-                        throw new ApplicationException(String.Format("Table number is too big. Document contains only {0} tables.", document.Tables.Count));
+                        if (tablesCount <= 0)
+                            throw new ApplicationException("Document does not contain a table.");
 
-                    Word.Table table = document.Tables[options.TableNumber];
-                    //foreach (Word.Paragraph item in document.Paragraphs)
-                    //    Console.WriteLine(item.Range.Text);
-                    Debug.WriteLine(table.LeftPadding);
-                    Debug.WriteLine(table.RightPadding);
-                    Debug.WriteLine(table.TopPadding);
-                    Debug.WriteLine(table.BottomPadding);
+                        if (options.TableNumber > tablesCount)
+                            throw new ApplicationException(String.Format("Table number is too big. Document contains only {0} tables.", document.Tables.Count));
 
-                    string texTable = Converter.ToTex(table);
-                    File.WriteAllText(options.TexFileName, texTable, Encoding.UTF8);
+                        var table = tables.ElementAt(options.TableNumber - 1);
 
-                    Console.WriteLine("Done.");
+                        string texTable = Converter.ToTex(table);
+                        File.WriteAllText(options.TexFileName, texTable, Encoding.UTF8);
+
+                        Console.WriteLine("Done.");
+                    }
                 }
                 catch (ApplicationException aex)
                 {
@@ -62,10 +60,6 @@ namespace TabWord2Latex
                 }
                 finally
                 {
-                    if (document != null)
-                        document.Close();
-                    if (app != null)
-                        app.Quit();
                 }
             }
         }

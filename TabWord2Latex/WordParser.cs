@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Word = Microsoft.Office.Interop.Word;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace TabWord2Latex
 {
@@ -13,55 +15,106 @@ namespace TabWord2Latex
         public Table ParseTable(Word.Table wordTable)
         {
             Table table = new Table();
-            //Read table caption (first paragraph above the table)
-            Word.Range prevRange = wordTable.Range.Previous(Word.WdUnits.wdParagraph, 1);
-            table.Caption = prevRange == null ? String.Empty : prevRange.Text.TrimEnd(new char[] { '\r', '\n' });
-            //Read hyphenation settings
-            table.Hyphenation = wordTable.Range.ParagraphFormat.Hyphenation == 1;
-            
-            //var columns = new List<Column>();
 
-            //foreach (Word.Column wordColumn in wordTable.Columns)
-            //    columns.Add(new Column() { Width = wordColumn.Width });
+            Word.TableProperties tabProp = wordTable.Elements<Word.TableProperties>().First();
 
-            //table.Columns = columns;
+            var grid = wordTable.Elements<Word.TableGrid>().First();
+            var columns = grid.Elements<Word.GridColumn>();
 
-            int totalCols = wordTable.Columns.Count;
-            int totalRows = wordTable.Rows.Count;
-            table.Cells = new Cell[totalCols, totalRows];
-            //for (int i = 1; i <= totalCols; i++)
-            //    for (int j = 1; j <= totalRows; j++)
-            //    {
-            //        try
-            //        {
-            //            Word.Cell cell = wordTable.Cell(j, i);
-            //            Console.WriteLine("{0} col, {1} row: {2}", i, j, cell.Range.Text);
-            //            table.Cells[i-1, j-1] = new Cell()
-            //            {
-            //                Col = i-1,
-            //                Row = j-1,
-            //                Text = cell.Range.Text,
-            //                Width = cell.Width,
-            //                Height = cell.Height
-            //            };
-                        
-            //        }
-            //        catch (System.Exception ex)
-            //        {
-            //            Console.WriteLine("NO: {0} col, {1} row", i, j);
-            //            table.Cells[i-1, j-1] = null;
-            //        }
-            //    }
+            table.Columns = columns.Select(gc => new Column(int.Parse(gc.Width.Value)));
 
-            Word.Cell cell = wordTable.Cell(1, 1);
-            while (cell != null)
+            var rows = wordTable.Elements<Word.TableRow>();
+
+            int colsTotal = columns.Count();
+            int rowsTotal = rows.Count();
+            table.Cells = new Cell[colsTotal, rowsTotal];
+
+            int r = 0;
+            foreach (var row in rows)
             {
-                Console.WriteLine("{0} col, {1} row: {2}", cell.ColumnIndex, cell.RowIndex, cell.Range.Text);
-                cell = cell.Next;
-                
+                int c = 0;
+
+                foreach (var wordCell in row.Elements<Word.TableCell>())
+                {
+                    var cell = new Cell()
+                    {
+                        Text = wordCell.InnerText,
+                        Col = c,
+                        Row = r
+                    };
+                    //Console.WriteLine(cell.InnerText);
+                    var cellProp = wordCell.Elements<Word.TableCellProperties>().First();
+
+                    cell.VAlign = ConvertVerticalAlign(cellProp.TableCellVerticalAlignment);
+
+                    cell.HMerge = ConvertMerge(cellProp.HorizontalMerge);
+                    cell.VMerge = ConvertMerge(cellProp.VerticalMerge);
+
+                    table.Cells[c, r] = cell;
+                    c++;
+                }
+                r++;
             }
 
             return table;
+        }
+
+        static Cell.VerticalAlignment ConvertVerticalAlign(Word.TableCellVerticalAlignment align)
+        {
+            if (align == null)
+                return Cell.VerticalAlignment.Center; //default value
+            switch (align.Val.Value)
+            {
+                case Word.TableVerticalAlignmentValues.Bottom:
+                    return Cell.VerticalAlignment.Bottom;
+                case Word.TableVerticalAlignmentValues.Center:
+                    return Cell.VerticalAlignment.Center;
+                case Word.TableVerticalAlignmentValues.Top:
+                    return Cell.VerticalAlignment.Top;
+                default:
+                    return Cell.VerticalAlignment.Center;
+            }
+        }
+
+        static Cell.Merge ConvertMergeValue(Word.MergedCellValues value)
+        {
+            switch (value)
+            {
+                case Word.MergedCellValues.Restart:
+                    return Cell.Merge.Restart;
+                case Word.MergedCellValues.Continue:
+                    return Cell.Merge.Continue;
+                default:
+                    return Cell.Merge.None;
+            }
+        }
+
+        static Cell.Merge ConvertMerge(Word.VerticalMerge merge)
+        {
+            if (merge == null || merge.Val == null)
+                return Cell.Merge.None;
+            else
+                return ConvertMergeValue(merge.Val.Value);
+        }
+
+        static Cell.Merge ConvertMerge(Word.HorizontalMerge merge)
+        {
+            if (merge == null || merge.Val == null)
+                return Cell.Merge.None;
+            else
+                return ConvertMergeValue(merge.Val.Value);
+        }
+
+        /// <summary>
+        /// Returns width in dxa (not pt!).
+        /// </summary>
+        /// <returns>Width in dxa.</returns>
+        static int ConvertWidth(Word.TableCellWidth width)
+        {
+            if (width == null || width.Width == null)
+                return 0;
+            else
+                return int.Parse(width.Width);
         }
     }
 }

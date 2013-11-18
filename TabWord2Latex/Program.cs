@@ -40,7 +40,7 @@ namespace TabWord2Latex
                             throw new ApplicationException("Document does not contain a table.");
 
                         if (options.TableNumber > tablesCount)
-                            throw new ApplicationException(String.Format("Table number is too big. Document contains only {0} tables.", document.Tables.Count));
+                            throw new ApplicationException(String.Format("Table number is too big. Document contains only {0} tables.", tablesCount));
 
                         var table = tables.ElementAt(options.TableNumber - 1);
 

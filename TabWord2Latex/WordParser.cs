@@ -33,16 +33,18 @@ namespace TabWord2Latex
             int colsTotal = columns.Count();
             int rowsTotal = wordRows.Count();
 
-            var rows = new List<Row>();
-
+            table.Cells = new Cell[colsTotal, rowsTotal];
+            int r = 0;
             foreach (var wordRow in wordRows)
             {
-                var cells = new List<Cell>();
+                int c = 0;
                 foreach (var wordCell in wordRow.Elements<Word.TableCell>())
                 {
                     var cell = new Cell()
                     {
-                        Text = wordCell.InnerText
+                        Text = wordCell.InnerText,
+                        Col = c,
+                        Row = r
                     };
                     var par = wordCell.Descendants<Word.Paragraph>().First();
                     cell.Justification = ParseJustification(par);
@@ -55,21 +57,34 @@ namespace TabWord2Latex
 
                         if (cellProp.GridSpan != null && cellProp.GridSpan.Val != null
                             && cellProp.GridSpan.Val.HasValue)
+                        {
                             cell.ColSpan = cellProp.GridSpan.Val.Value;
+                            if (cell.ColSpan > 1)
+                                cell.HMerge = Cell.Merge.Restart;
+                        }
 
                         cell.VMerge = ConvertMerge(cellProp.VerticalMerge);
 
-                        cells.Add(cell);
+                        if (cellProp.TableCellWidth != null 
+                            && cellProp.TableCellWidth.Width != null
+                            && cellProp.TableCellWidth.Width.HasValue)
+                        cell.Width = int.Parse(cellProp.TableCellWidth.Width.Value);
+
+                        table.Cells[c++, r] = cell;
 
                         // Add additional empty cells for GridSpan value (emulating HorizontalMerge value)
                         for (int i = 1; i < cell.ColSpan; i++)
-                            cells.Add(new Cell() { HMerge = Cell.Merge.Continue });
+                            table.Cells[c++, r] = new Cell() 
+                            { 
+                                HMerge = Cell.Merge.Continue, 
+                                Col = c, 
+                                Row = r 
+                            };
                     }
                 }
-                rows.Add(new Row { Cells = cells });
+                r++;
             }
 
-            table.Rows = rows;
             table.CalculateSpan();
             return table;
         }

@@ -25,24 +25,39 @@ namespace TabWord2Latex
         public string Caption { get; set; }
         public bool Hyphenation { get; set; }
         public IEnumerable<Column> Columns { get; set; }
-        public IList<Row> Rows { get; set; }
+        public Cell[,] Cells { get; set; }
+
+        public int ColsCount
+        {
+            get
+            {
+                return Cells == null ? 0 : Cells.GetLength(0);
+            }
+        }
+
+        public int RowsCount
+        {
+            get
+            {
+                return Cells == null ? 0 : Cells.GetLength(1);
+            }
+        }
 
         /// <summary>
         /// Calculates span based on merge information.
         /// </summary>
         internal void CalculateSpan()
         {
-            if (Rows == null)
+            if (Cells == null)
                 return;
 
-            int colsCount = Columns.Count();
             // Vertical merge
-            for (int i = 0; i < colsCount; i++)
+            for (int i = 0; i < ColsCount; i++)
             {
                 Cell mergeCell = null;
-                for (int j = 0; j < Rows.Count; j++)
+                for (int j = 0; j < RowsCount; j++)
                 {
-                    Cell cell = Rows[j].Cells[i];
+                    Cell cell = Cells[i,j];
                     cell.RowSpan = 1;
                     switch (cell.VMerge)
                     {
@@ -115,10 +130,17 @@ namespace TabWord2Latex
 
     class Column
     {
-        public float Width { get; set; }
+        /// <summary>
+        /// Width in dxa.
+        /// </summary>
+        public int Width { get; set; }
+        //public Column(int dxaWidth)
+        //{
+        //    Width = dxaWidth / 20; // dxa to pt: http://startbigthinksmall.wordpress.com/2010/01/04/points-inches-and-emus-measuring-units-in-office-open-xml/
+        //}
         public Column(int dxaWidth)
         {
-            Width = dxaWidth / 20; // dxa to pt: http://startbigthinksmall.wordpress.com/2010/01/04/points-inches-and-emus-measuring-units-in-office-open-xml/
+            Width = dxaWidth;
         }
     }
 
@@ -155,5 +177,10 @@ namespace TabWord2Latex
 		    get { return _rowSpan;}
 		    set { _rowSpan = value;}
 	    }
+
+        /// <summary>
+        /// Width in dxa.
+        /// </summary>
+        public int Width { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,6 +40,11 @@ namespace TabWord2Latex
             return CommandRargs("end", envname);
         }
 
+        private static string DxaToPt(int dxa)
+        {
+            return String.Concat((((float)dxa) / 20).ToString(CultureInfo.InvariantCulture), "pt");
+        }
+
         /// <summary>
         /// Builds column definition for tabular.
         /// </summary>
@@ -47,27 +53,93 @@ namespace TabWord2Latex
             StringBuilder s = new StringBuilder("|");
             foreach (var col in table.Columns)
             {
-                s.Append("C{").Append(col.Width).Append("pt}|");
+                s.Append("C{").Append(DxaToPt(col.Width)).Append("}|");
             }
             return s.ToString();
         }
 
-        private string BuildTableRow(Row row)
+        private string BuildJustification(CellJustification just, string value = "")
         {
-            StringBuilder s = new StringBuilder("|");
-            foreach (var cell in row.Cells)
+            string commandName;
+            switch (just)
             {
-                if (cell.HMerge == Cell.Merge.Continue ||
-                    cell.VMerge == Cell.Merge.Continue)
+                case CellJustification.Center:
+                    commandName = "centering"; break;
+                case CellJustification.Right:
+                    commandName = "raggedright"; break;
+                case CellJustification.Left:
+                default:
+                    commandName = String.Empty; break;
+            }
+
+            return String.IsNullOrEmpty(value) ? Command(commandName) 
+                                               : CommandRargs(commandName, value);
+        }
+
+        private string BuildTableCells(Table table)
+        {
+            StringBuilder s = new StringBuilder();
+            s.AppendLine(Command("hline"));
+
+            for (int r = 0; r < table.RowsCount; r++)
+            {
+                bool hasVMergedCells = false;
+                for (int c = 0; c < table.ColsCount; c++)
                 {
-                    s.Append(" &");
+                    Cell cell = table.Cells[c, r];
+                    if (cell.HMerge == Cell.Merge.Continue)
+                        continue;
+                    if (cell.VMerge == Cell.Merge.Continue)
+                    {
+                        s.Append(" ");
+                        hasVMergedCells = true;
+                    }
+                    else
+                    {
+                        string value = cell.Text;
+                        if (cell.VMerge == Cell.Merge.Restart)
+                        {
+                            // multirow disables column justification, fix:
+                            if (cell.Justification != CellJustification.Left)
+                                value = BuildJustification(cell.Justification, value);
+                            value = CommandRargs("multirow", cell.RowSpan,
+                                Command("hsize"), value);
+                            hasVMergedCells = true;
+                        }
+                        if (cell.HMerge == Cell.Merge.Restart)
+                        {
+                            value = CommandRargs("multicolumn", cell.ColSpan,
+                                "|C{" + DxaToPt(cell.Width) + "}|", value);
+                        }
+
+                        if (c != 0)
+                            s.Append(" ");
+                        s.Append(value).Append(" ");
+                    }
+                    if (c < table.ColsCount - 1)
+                        s.Append("&");
+                    
+                }
+
+                if (hasVMergedCells)
+                {
+                    int begin = 0, end = 0;
+                    for (int i = 0; i < table.ColsCount; i++)
+                    {
+                        Cell cell = table.Cells[i, r];
+                        //if (cell.HMerge = Cell.Merge.Restart
+                        s.Append(CommandRargs("tncl"));
+                    }
                 }
                 else
                 {
-                    //if (cell.
+                    s.Append(Command("tnhl"));
                 }
-                s.AppendLine();
+                
+                if (r < table.RowsCount - 1)
+                    s.AppendLine();
             }
+
             return s.ToString();
         }
 
@@ -90,9 +162,7 @@ namespace TabWord2Latex
             // \begin{tabular}{...}
             {
                 s.AppendLine(BeginEnvironment("tabular", BuildColDef(table)));
-                s.AppendLine(CommandRargs("hline"));
-                foreach (var row in table.Rows)
-                    s.AppendLine(BuildTableRow(row));
+                s.AppendLine(BuildTableCells(table));
                 s.AppendLine(EndEnvironment("tabular"));
             }
             // \end{tabular}

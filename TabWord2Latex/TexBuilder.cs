@@ -129,7 +129,7 @@ namespace TabWord2Latex
                         }
                         if (cell.HMerge == Cell.Merge.Restart)
                         {
-                            value = CommandRargs("multicolumn", cell.ColSpan,
+                            value = CommandRargs("multicolumn", cell.ColSpan, (c == 0 ? "|" : "") +
                                 "C{" + DxaToPt(cell.Width) + "}|", value);
                         }
 

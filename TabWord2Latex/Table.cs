@@ -44,7 +44,8 @@ namespace TabWord2Latex
         }
 
         /// <summary>
-        /// Calculates span based on merge information.
+        /// Calculates row span based on horizontal merge information
+        /// and vertical merge based on column span.
         /// </summary>
         internal void CalculateSpan()
         {
@@ -71,61 +72,28 @@ namespace TabWord2Latex
                     }
                 }
             }
-        }
-    }
 
-    class Row
-    {
-        public IList<Cell> Cells { get; set; }
-        ///// <summary>
-        ///// Alignment for most of the cells.
-        ///// </summary>
-        //public CellAlignment RowAlignment
-        //{
-        //    get
-        //    {
-        //        // not optimal, but easy to read
-        //        int top = Cells.Count(c => c.Align == CellAlignment.Top);
-        //        int center = Cells.Count(c => c.Align == CellAlignment.Center);
-        //        int bottom = Cells.Count(c => c.Align == CellAlignment.Bottom);
-        //        CellAlignment result = CellAlignment.Center;
-        //        if (top > center)
-        //            if (top > bottom)
-        //                result = CellAlignment.Top;
-        //            else
-        //                result = CellAlignment.Bottom;
-        //        else
-        //            if (bottom > center)
-        //                result = CellAlignment.Bottom;
-        //            else
-        //                result = CellAlignment.Center;
-        //        return result;
-        //    }
-        //}
-        ///// <summary>
-        ///// Justification for most of the cells.
-        ///// </summary>
-        //public CellJustification RowJustification
-        //{
-        //    get
-        //    {
-        //        int left = Cells.Count(c => c.Justification == CellJustification.Left);
-        //        int center = Cells.Count(c => c.Justification == CellJustification.Center);
-        //        int bottom = Cells.Count(c => c.Justification == CellJustification.Right);
-        //        CellJustification result = CellJustification.Center;
-        //        if (left > center)
-        //            if (left > bottom)
-        //                result = CellJustification.Left;
-        //            else
-        //                result = CellJustification.Right;
-        //        else
-        //            if (bottom > center)
-        //                result = CellJustification.Right;
-        //            else
-        //                result = CellJustification.Center;
-        //        return result;
-        //    }
-        //}
+            // Horizontal merge
+            for (int i = 0; i < ColsCount; i++)
+            {
+                for (int j = 0; j < RowsCount; j++)
+                {
+                    Cell cell = Cells[i, j];
+                    if (cell.VMerge == Cell.Merge.Restart && 
+                        cell.HMerge == Cell.Merge.Restart)
+                    {
+                        for (int m = 1; m < cell.ColSpan; m++)
+                        {
+                            for (int n = 1; n < cell.RowSpan; n++)
+                            {
+                                Cell mergedCell = Cells[m, n];
+                                mergedCell.VMerge = Cell.Merge.Continue;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     class Column

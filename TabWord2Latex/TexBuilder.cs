@@ -46,6 +46,19 @@ namespace TabWord2Latex
         }
 
         /// <summary>
+        /// Returns column definition with specific align, justification and width.
+        /// </summary>
+        /// <param name="width">Width in dxa.</param>
+        private string GetColDef(CellAlignment align, CellJustification justfn, int width)
+        {
+            // TODO: add alignment and justification support
+            // (strategy pattern or align+justfn struct and pattern matching through dictionary)
+            StringBuilder s = new StringBuilder();
+            s.Append("C{").Append(DxaToPt(width)).Append("}");
+            return s.ToString();
+        }
+
+        /// <summary>
         /// Builds column definition for tabular.
         /// </summary>
         private string BuildColDef(Table table)
@@ -53,15 +66,16 @@ namespace TabWord2Latex
             StringBuilder s = new StringBuilder("|");
             foreach (var col in table.Columns)
             {
-                s.Append("C{").Append(DxaToPt(col.Width)).Append("}|");
+                // TODO: add alignment and justification support
+                s.Append(GetColDef(CellAlignment.Center, CellJustification.Center, col.Width)).Append("|");
             }
             return s.ToString();
         }
 
-        private string BuildJustification(CellJustification just, string value = "")
+        private string BuildJustification(CellJustification justfn, string value = "")
         {
             string commandName;
-            switch (just)
+            switch (justfn)
             {
                 case CellJustification.Center:
                     commandName = "centering"; break;
@@ -111,10 +125,17 @@ namespace TabWord2Latex
                     Cell cell = table.Cells[c, r];
 
                     if (cell.HMerge == Cell.Merge.Continue)
+                    {
                         continue;
+                    }
                     if (cell.VMerge == Cell.Merge.Continue)
                     {
-                        s.Append(" ");
+                        if (cell.HMerge == Cell.Merge.Restart)
+                            s.Append(CommandRargs("multicolumn", cell.ColSpan, (c == 0 ? "|" : "") +
+                                GetColDef(cell.Align, cell.Justification, cell.Width) + "|", String.Empty))
+                            .Append(" ");
+                        else
+                            s.Append(" ");
                     }
                     else
                     {
@@ -130,7 +151,7 @@ namespace TabWord2Latex
                         if (cell.HMerge == Cell.Merge.Restart)
                         {
                             value = CommandRargs("multicolumn", cell.ColSpan, (c == 0 ? "|" : "") +
-                                "C{" + DxaToPt(cell.Width) + "}|", value);
+                                GetColDef(cell.Align, cell.Justification, cell.Width) + "|", value);
                         }
 
                         if (c != 0)

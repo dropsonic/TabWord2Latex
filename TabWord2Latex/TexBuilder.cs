@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace TabWord2Latex
@@ -100,6 +101,12 @@ namespace TabWord2Latex
                                                : CommandRargs(commandName, value);
         }
 
+        private string BuildCellText(string text)
+        {
+            //return text.Replace(Environment.NewLine, Command("linebreak"));
+            return Regex.Replace(text, @"\r\n?|\n", " " + Command("linebreak") + " ");
+        }
+
         private string BuildTableCells(Table table)
         {
             StringBuilder s = new StringBuilder();
@@ -158,7 +165,7 @@ namespace TabWord2Latex
                     }
                     else
                     {
-                        string value = cell.Text;
+                        string value = BuildCellText(cell.Text);
                         if (cell.VMerge == Cell.Merge.Restart)
                         {
                             // multirow disables column justification, fix:

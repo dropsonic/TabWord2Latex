@@ -42,7 +42,7 @@ namespace TabWord2Latex
                 {
                     var cell = new Cell()
                     {
-                        Text = wordCell.InnerText,
+                        Text = ParseCellText(wordCell),
                         Col = c,
                         Row = r
                     };
@@ -94,7 +94,7 @@ namespace TabWord2Latex
         /// </summary>
         static string ExtractCaption(string captionString)
         {
-            Regex regex = new Regex(@"^(Таблица|Table)\s*[0-9,.:;-]*\s*[-–—]*\s*", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            Regex regex = new Regex(@"^\s*(Таблица|Table)\s*[0-9,.:;-]*\s*[-–—]*\s*", RegexOptions.Singleline | RegexOptions.IgnoreCase);
             var match = regex.Match(captionString);
             if (match.Success)
                 return captionString.Remove(match.Index, match.Length);
@@ -176,6 +176,19 @@ namespace TabWord2Latex
             }
 
             return CellJustification.Left; // default value for Microsoft Word
+        }
+
+        static string ParseCellText(Word.TableCell cell)
+        {
+            var pars = cell.Descendants<Word.Paragraph>().ToArray();
+            StringBuilder s = new StringBuilder();
+            for (int i = 0; i < pars.Length; i++)
+            {
+                s.Append(pars[i].InnerText);
+                if (i < pars.Length - 1)
+                    s.AppendLine();
+            }
+            return s.ToString();
         }
     }
 }

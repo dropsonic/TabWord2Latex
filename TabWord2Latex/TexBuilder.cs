@@ -87,9 +87,24 @@ namespace TabWord2Latex
                 for (int i = 0; i < table.ColsCount; i++)
                 {
                     Cell cell = table.Cells[i, r];
-
-                    //s.Append(CommandRargs("tncl"));
+                    if (cell.VMerge == Cell.Merge.Continue)
+                    {
+                        begin++;
+                        end++;
+                        if (end - 1 - begin > 0) // if we are at solid row now
+                        {
+                            s.Append(CommandRargs("cline", String.Format("{0}-{1}", begin, end-1)));
+                            begin = end-1;
+                        }
+                    }
+                    else
+                    {
+                        end++;
+                    }
                 }
+                if (begin == 0 && end == table.ColsCount)
+                    s.Append(Command("hline"));
+                s.AppendLine();
                     
                 for (int c = 0; c < table.ColsCount; c++)
                 {
@@ -115,7 +130,7 @@ namespace TabWord2Latex
                         if (cell.HMerge == Cell.Merge.Restart)
                         {
                             value = CommandRargs("multicolumn", cell.ColSpan,
-                                "|C{" + DxaToPt(cell.Width) + "}|", value);
+                                "C{" + DxaToPt(cell.Width) + "}|", value);
                         }
 
                         if (c != 0)
@@ -130,8 +145,8 @@ namespace TabWord2Latex
                     s.AppendLine();
             }
 
+            s.AppendLine();
             s.Append(Command("hline"));
-
             return s.ToString();
         }
 

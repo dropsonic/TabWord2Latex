@@ -79,20 +79,27 @@ namespace TabWord2Latex
         private string BuildTableCells(Table table)
         {
             StringBuilder s = new StringBuilder();
-            s.AppendLine(Command("hline"));
 
             for (int r = 0; r < table.RowsCount; r++)
             {
-                bool hasVMergedCells = false;
+                // Line length is calculated for the top line of the row
+                int begin = 0, end = 0;
+                for (int i = 0; i < table.ColsCount; i++)
+                {
+                    Cell cell = table.Cells[i, r];
+
+                    //s.Append(CommandRargs("tncl"));
+                }
+                    
                 for (int c = 0; c < table.ColsCount; c++)
                 {
                     Cell cell = table.Cells[c, r];
+
                     if (cell.HMerge == Cell.Merge.Continue)
                         continue;
                     if (cell.VMerge == Cell.Merge.Continue)
                     {
                         s.Append(" ");
-                        hasVMergedCells = true;
                     }
                     else
                     {
@@ -104,7 +111,6 @@ namespace TabWord2Latex
                                 value = BuildJustification(cell.Justification, value);
                             value = CommandRargs("multirow", cell.RowSpan,
                                 Command("hsize"), value);
-                            hasVMergedCells = true;
                         }
                         if (cell.HMerge == Cell.Merge.Restart)
                         {
@@ -116,29 +122,15 @@ namespace TabWord2Latex
                             s.Append(" ");
                         s.Append(value).Append(" ");
                     }
-                    if (c < table.ColsCount - 1)
-                        s.Append("&");
-                    
-                }
 
-                if (hasVMergedCells)
-                {
-                    int begin = 0, end = 0;
-                    for (int i = 0; i < table.ColsCount; i++)
-                    {
-                        Cell cell = table.Cells[i, r];
-                        //if (cell.HMerge = Cell.Merge.Restart
-                        s.Append(CommandRargs("tncl"));
-                    }
-                }
-                else
-                {
-                    s.Append(Command("tnhl"));
+                    s.Append(c < (table.ColsCount - 1) ? "&" : @"\\");
                 }
                 
                 if (r < table.RowsCount - 1)
                     s.AppendLine();
             }
+
+            s.Append(Command("hline"));
 
             return s.ToString();
         }

@@ -79,14 +79,14 @@ namespace TabWord2Latex
                 for (int j = 0; j < RowsCount; j++)
                 {
                     Cell cell = Cells[i, j];
-                    if (cell.VMerge == Cell.Merge.Restart && 
+                    if (cell.VMerge == Cell.Merge.Restart &&
                         cell.HMerge == Cell.Merge.Restart)
                     {
                         for (int m = 1; m < cell.ColSpan; m++)
                         {
                             for (int n = 1; n < cell.RowSpan; n++)
                             {
-                                Cell mergedCell = Cells[m, n];
+                                Cell mergedCell = Cells[i+m, j+n];
                                 mergedCell.VMerge = Cell.Merge.Continue;
                             }
                         }

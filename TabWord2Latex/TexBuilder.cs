@@ -49,13 +49,23 @@ namespace TabWord2Latex
         /// Returns column definition with specific align, justification and width.
         /// </summary>
         /// <param name="width">Width in dxa.</param>
-        private string GetColDef(CellAlignment align, CellJustification justfn, int width)
+        private string ColDef(CellAlignment align, CellJustification justfn, int width)
         {
             // TODO: add alignment and justification support
             // (strategy pattern or align+justfn struct and pattern matching through dictionary)
             StringBuilder s = new StringBuilder();
             s.Append("C{").Append(DxaToPt(width)).Append("}");
             return s.ToString();
+        }
+
+        private string CLine(int begin, int end)
+        {
+            return CommandRargs("cline", String.Format("{0}-{1}", begin, end));
+        }
+
+        private string NewTabLine()
+        {
+            return @"\\";
         }
 
         /// <summary>
@@ -67,7 +77,7 @@ namespace TabWord2Latex
             foreach (var col in table.Columns)
             {
                 // TODO: add alignment and justification support
-                s.Append(GetColDef(CellAlignment.Center, CellJustification.Center, col.Width)).Append("|");
+                s.Append(ColDef(CellAlignment.Center, CellJustification.Center, col.Width)).Append("|");
             }
             return s.ToString();
         }
@@ -107,7 +117,7 @@ namespace TabWord2Latex
                         end++;
                         if (end - 1 - begin > 0) // if we are at solid row now
                         {
-                            s.Append(CommandRargs("cline", String.Format("{0}-{1}", begin, end-1)));
+                            s.Append(CLine(begin, end - 1));
                             begin = end-1;
                         }
                     }
@@ -118,6 +128,9 @@ namespace TabWord2Latex
                 }
                 if (begin == 0 && end == table.ColsCount)
                     s.Append(Command("hline"));
+                else if (end - 1 - begin > 0)
+                    s.Append(CLine(begin + 1, end));
+
                 s.AppendLine();
                     
                 for (int c = 0; c < table.ColsCount; c++)
@@ -126,14 +139,20 @@ namespace TabWord2Latex
 
                     if (cell.HMerge == Cell.Merge.Continue)
                     {
+                        //if (c == table.ColsCount - 1)
+                        //    s.Append(NewTabLine());
                         continue;
                     }
                     if (cell.VMerge == Cell.Merge.Continue)
                     {
                         if (cell.HMerge == Cell.Merge.Restart)
+                        {
+                            if (c != 0)
+                                s.Append(" ");
                             s.Append(CommandRargs("multicolumn", cell.ColSpan, (c == 0 ? "|" : "") +
-                                GetColDef(cell.Align, cell.Justification, cell.Width) + "|", String.Empty))
+                                ColDef(cell.Align, cell.Justification, cell.Width) + "|", String.Empty))
                             .Append(" ");
+                        }
                         else
                             s.Append(" ");
                     }
@@ -151,7 +170,7 @@ namespace TabWord2Latex
                         if (cell.HMerge == Cell.Merge.Restart)
                         {
                             value = CommandRargs("multicolumn", cell.ColSpan, (c == 0 ? "|" : "") +
-                                GetColDef(cell.Align, cell.Justification, cell.Width) + "|", value);
+                                ColDef(cell.Align, cell.Justification, cell.Width) + "|", value);
                         }
 
                         if (c != 0)
@@ -159,7 +178,7 @@ namespace TabWord2Latex
                         s.Append(value).Append(" ");
                     }
 
-                    s.Append(c < (table.ColsCount - 1) ? "&" : @"\\");
+                    s.Append((c + cell.ColSpan) < table.ColsCount ? "&" : NewTabLine());
                 }
                 
                 if (r < table.RowsCount - 1)

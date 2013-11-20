@@ -19,7 +19,8 @@ namespace TabWord2Latex
 
             // Read caption (previous paragraph to the table)
             var captionPar = wordTable.PreviousSibling<Word.Paragraph>();
-            table.Caption = ExtractCaption(captionPar.InnerText);
+            if (captionPar != null)
+                table.Caption = ExtractCaption(captionPar.InnerText);
 
             //Word.TableProperties tabProp = wordTable.Elements<Word.TableProperties>().First();
 
